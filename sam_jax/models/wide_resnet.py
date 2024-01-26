@@ -91,7 +91,9 @@ class WideResnetBlock(nn.Module):
             channels: int,
             strides: Tuple[int, int] = (1, 1),
             activate_before_residual: bool = False,
-            train: bool = True) -> jnp.ndarray:
+            train: bool = True,
+            ak3: bool = False
+            ) -> jnp.ndarray:
     """Implements the forward pass in the module.
 
     Args:
@@ -134,6 +136,27 @@ class WideResnetBlock(nn.Module):
         bias=False,
         kernel_init=utils.conv_kernel_init_fn,
         name='conv2')
+    
+    if ak3 == True:
+
+      block_x_31 = nn.Conv(
+        block_x,
+        channels, (3, 1),
+        padding='SAME',
+        bias=False,
+        kernel_init=utils.conv_kernel_init_fn,
+        name='conv2_ak3_31')
+
+      block_x_13 = nn.Conv(
+        block_x,
+        channels, (1, 3),
+        padding='SAME',
+        bias=False,
+        kernel_init=utils.conv_kernel_init_fn,
+        name='conv2_ak3_13')
+
+      block_x = _output_add(block_x, block_x_31)
+      block_x = _output_add(block_x, block_x_13)
 
     return _output_add(block_x, orig_x)
 
@@ -147,7 +170,9 @@ class WideResnetGroup(nn.Module):
             channels: int,
             strides: Tuple[int, int] = (1, 1),
             activate_before_residual: bool = False,
-            train: bool = True) -> jnp.ndarray:
+            train: bool = True,
+            ak3: bool = False
+            ) -> jnp.ndarray:
     """Implements the forward pass in the module.
 
     Args:
@@ -173,7 +198,8 @@ class WideResnetGroup(nn.Module):
           channels,
           strides if i == 0 else (1, 1),
           activate_before_residual=activate_before_residual and not i,
-          train=train)
+          train=train,
+          ak3=ak3)
     if FLAGS.use_additional_skip_connections:
       x = _output_add(x, orig_x)
     return x
@@ -227,7 +253,9 @@ class WideResnet(nn.Module):
         x,
         blocks_per_group,
         64 * channel_multiplier, (2, 2),
-        train=train)
+        # train=train)
+        train=train,
+        ak3=True)
     if FLAGS.use_additional_skip_connections:
       x = _output_add(x, first_x)
     x = utils.activation(x, train=train, name='pre-pool-bn')

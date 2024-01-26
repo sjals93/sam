@@ -116,7 +116,11 @@ def main(_):
         FLAGS.batch_level_augmentations,
         image_size=image_size)
   elif FLAGS.dataset == 'cifar100':
+    print('================================================================')
+    print('1111111111111111111111111111111111111111111111111111111111111111')
     if FLAGS.from_pretrained_checkpoint:
+      print('================================================================')
+      print('2222222222222222222222222222222222222222222222222222222222222222')
       image_size = efficientnet.name_to_image_size(FLAGS.model_name)
     else:
       image_size = None
